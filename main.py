@@ -7,7 +7,7 @@ import re
 
 # Customize page tab
 st.set_page_config(
-        page_title="PanicPal",
+        page_title="PanicPal!",
         page_icon="🌊",
         layout="wide",
     )
@@ -63,47 +63,8 @@ def flip_card(i):
                 st.session_state.flipped[idx1] = st.session_state.flipped[idx2] = False
             st.session_state.selected = []
 
-
-# SupportService Class
-class SupportService:
-    def __init__(self):
-        self.resources = {
-            "resource1": Resource("resource1", "Calming Breathing Exercise", "A guided breathing exercise...", "Calming Breathing Exercise", """4-7-8 Technique: 
-Sit or lie in a comfortable position.
-Inhale through your nose for 4 seconds.
-Hold your breath for 7 seconds.
-Exhale slowly through your mouth for 8 seconds.
-Repeat for several rounds. """),
-            "resource2": Resource("resource2", "National Suicide Prevention Lifeline", "Call or text 988", "Hotlines"),
-            "resource3": Resource("resource3", "Find a Therapist", "Directory of therapists", "Therapists")
-        }
-
-    def add_resource(self, name, description, category, link=None):
-        resource_id = self._generate_unique_id()
-        new_resource = Resource(resource_id, name, description, category, link)
-        self.resources[resource_id] = new_resource
-
-    def get_resources_by_category(self, category):
-        return [resource for resource in self.resources.values() if resource.category == category]
-
-    def find_resource_by_id(self, resource_id):
-        return self.resources.get(resource_id)
-
-    def _generate_unique_id(self):
-        return str(uuid.uuid4())
-
-
-class Resource:
-    def __init__(self, resource_id, name, description, category, link=None):
-        self.resource_id = resource_id
-        self.name = name
-        self.description = description
-        self.category = category
-        self.link = link
-
 class MentalHealthAppUI:
-    def __init__(self, support_service):
-        self.support_service = support_service
+    def __init__(self): # Remove the support_service parameter
         self.google_api_key = self.load_api_key()  # Load API key in the constructor
 
         if self.google_api_key:
@@ -329,7 +290,6 @@ class MentalHealthAppUI:
                 self.show_chatbot()
 
 if __name__ == "__main__":
-    support_app = SupportService()
 
-    ui = MentalHealthAppUI(support_app)
+    ui = MentalHealthAppUI()
     ui.run()

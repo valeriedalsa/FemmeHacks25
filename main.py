@@ -307,7 +307,7 @@ class MentalHealthAppUI:
                 st.rerun()
 
     def show_wordsearch(self):
-        st.title("Affirmation Word Search")
+        st.title("Affirmation Word Search!")
 
         if 'wordsearch_grid' not in st.session_state or st.button("New Word Search"):
             # Select 5 random words from the affirmations list
@@ -316,7 +316,7 @@ class MentalHealthAppUI:
             st.session_state.wordsearch_reveal = False
 
         grid = st.session_state.wordsearch_grid
-        placed_words = st.session_state.wordsearch_placed_words
+        placed_words = self.create_wordsearch(selected_words)[1]
 
         st.write("Word Search Grid:")
 

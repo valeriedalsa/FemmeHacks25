@@ -307,7 +307,7 @@ class MentalHealthAppUI:
 
     def run(self):
         # Add a selectbox in the sidebar for navigation
-        page = st.sidebar.selectbox("Navigate to", ["Dashboard", "Resources", "Coping Mechanisms", "Games", "Chatbot"])
+        page = st.sidebar.selectbox("Navigate to", ["Dashboard", "Resources", "Anxiety Coping Mechanisms", "Games", "Chatbot"])
 
         if page == "Dashboard":
             self.show_dashboard()

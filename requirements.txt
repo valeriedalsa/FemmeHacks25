@@ -2,5 +2,5 @@ streamlit
 uuid
 os
 random
-google.generativeai
+google-generativeai
 re

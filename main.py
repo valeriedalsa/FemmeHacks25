@@ -307,7 +307,7 @@ class MentalHealthAppUI:
                 st.rerun()
 
     def show_wordsearch(self):
-        st.title("Affirmation Word Search!")
+        st.title("Affirmation Word Search")
 
         if 'wordsearch_grid' not in st.session_state or st.button("New Word Search"):
             # Select 5 random words from the affirmations list
@@ -316,9 +316,7 @@ class MentalHealthAppUI:
             st.session_state.wordsearch_reveal = False
 
         grid = st.session_state.wordsearch_grid
-        placed_words = self.create_wordsearch(selected_words)[1]
-
-        st.write("Word Search Grid:")
+        placed_words = st.session_state.wordsearch_placed_words
 
         # Create a set of highlighted cells
         highlighted_cells = set()
@@ -361,9 +359,9 @@ class MentalHealthAppUI:
 
         st.markdown(grid_html, unsafe_allow_html=True)
 
-        st.subheader("Find These Words:")
+        st.subheader("Find this word:")
         for word, _, _, _ in placed_words:
-            st.write(f"- {word}")
+            st.write(f"{word}")
 
         if st.button("Reveal Answers"):
             st.session_state.wordsearch_reveal = True # Use self

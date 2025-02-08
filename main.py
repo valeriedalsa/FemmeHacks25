@@ -3,22 +3,7 @@ import datetime
 import uuid
 import os
 import random
-import hashlib
-
-# Function to hash passwords securely (Not Needed Anymore)
-def hash_password(password, salt=None):
-    if salt is None:
-        salt = os.urandom(16)  # Generate a random salt
-    salted_password = salt + password.encode('utf-8')
-    hashed_password = hashlib.sha256(salted_password).hexdigest()
-    return salt, hashed_password
-
-# Function to verify passwords (Not Needed Anymore)
-def verify_password(stored_salt, stored_hash, password):
-    salt = stored_salt
-    salted_password = salt + password.encode('utf-8')
-    hashed_password = hashlib.sha256(salted_password).hexdigest()
-    return hashed_password == stored_hash
+import google.generativeai as genai
 
 # Coping Mechanisms List (for panic attacks)
 COPING_MECHANISMS = [
@@ -41,6 +26,13 @@ def init_game():
     return emojis, [False] * len(emojis)  # Cards and flipped states
 
 def flip_card(i):
+    if 'flipped' not in st.session_state:
+        st.session_state['flipped'] = [False] * len(st.session_state.get('cards', [])) # Ensure flipped is initialized
+    if 'selected' not in st.session_state:
+        st.session_state['selected'] = []
+    if 'matched' not in st.session_state:
+        st.session_state['matched'] = []
+
     if not st.session_state.flipped[i] and i not in st.session_state.matched:
         st.session_state.flipped[i] = True
         st.session_state.selected.append(i)
@@ -53,10 +45,10 @@ def flip_card(i):
                 st.session_state.flipped[idx1] = st.session_state.flipped[idx2] = False
             st.session_state.selected = []
 
+
 # SupportService Class
 class SupportService:
     def __init__(self):
-        self.users = {}
         self.resources = {
             "resource1": Resource("resource1", "Calm Breathing Exercise", "A guided breathing exercise...", "Coping Strategies", "some_link"),
             "resource2": Resource("resource2", "National Suicide Prevention Lifeline", "Call or text 988", "Hotlines"),
@@ -77,20 +69,6 @@ class SupportService:
     def _generate_unique_id(self):
         return str(uuid.uuid4())
 
-class User:
-    def __init__(self, user_id, name, email, preferences=None):
-        self.user_id = user_id
-        self.name = name
-        self.email = email
-        self.preferences = preferences or {}
-        self.support_history = []
-
-    def update_preferences(self, **kwargs):
-        self.preferences.update(kwargs)
-
-    def log_support_interaction(self, interaction_type, details=None):
-        timestamp = datetime.datetime.now()
-        self.support_history.append({"timestamp": timestamp, "type": interaction_type, "details": details})
 
 class Resource:
     def __init__(self, resource_id, name, description, category, link=None):
@@ -107,6 +85,60 @@ class MentalHealthAppUI:
     def show_dashboard(self):
         st.title("Mental Health Support App")
         st.write("Welcome! Here are some resources and tools to support your mental well-being.")
+
+        # Load Google API key from Streamlit secrets (recommended) or environment variable
+        if "GOOGLE_API_KEY" in st.secrets:
+            google_api_key = st.secrets["GOOGLE_API_KEY"]
+        elif "GOOGLE_API_KEY" in os.environ:
+            google_api_key = os.environ["GOOGLE_API_KEY"]
+        else:
+            google_api_key = st.text_input("Google API Key", type="password")  # Ask for key
+
+            if not google_api_key:
+                st.info(
+                    "Please enter your Google API key.  You can find it at https://makersuite.google.com/app/apikey."
+                )
+                st.stop()  # Stop execution if no key is provided
+
+        # Configure the Google Generative AI API
+        genai.configure(api_key=google_api_key)
+
+        # Select the Gemini model
+        model = genai.GenerativeModel('gemini-pro')
+
+        # Show title and description for Chatbot
+        st.title("💬 Chatbot")
+        st.write(
+            "This is a simple chatbot that uses Google's Gemini Pro model to generate responses. "
+            "To use this app, you need to provide a Google API key, which you can get [here](https://makersuite.google.com/app/apikey)."
+        )
+
+        # Initialize the chat session if it doesn't exist
+        if "chat_session" not in st.session_state:
+            st.session_state.chat_session = model.start_chat(history=[])
+
+        # Display the existing chat messages
+        for message in st.session_state.chat_session.history:
+            with st.chat_message(message.role):
+                st.markdown(message.parts[0].text)
+
+        # Get the user's prompt
+        if prompt := st.chat_input("What is up?"):
+            # Add user message to the chat
+            with st.chat_message("user"):
+                st.markdown(prompt)
+
+            # Get response from the model
+            try:
+                response = st.session_state.chat_session.send_message(prompt)
+
+                # Display the assistant's message
+                with st.chat_message("assistant"):
+                    st.markdown(response.text)
+
+            except Exception as e:
+                st.error(f"An error occurred: {e}")
+
 
     def show_resources(self):
         st.header("Mental Health Resources")
@@ -133,6 +165,13 @@ class MentalHealthAppUI:
             st.session_state.cards, st.session_state.flipped = init_game()
             st.session_state.selected = []
             st.session_state.matched = []
+        if 'flipped' not in st.session_state:
+            st.session_state['flipped'] = [False] * len(st.session_state.get('cards', [])) # Ensure flipped is initialized
+        if 'selected' not in st.session_state:
+            st.session_state['selected'] = []
+        if 'matched' not in st.session_state:
+            st.session_state['matched'] = []
+
 
         cols = st.columns(4)  # Create a 4-column grid
 
@@ -153,7 +192,7 @@ class MentalHealthAppUI:
 
     def run(self):
         # Add a selectbox in the sidebar for navigation
-        page = st.sidebar.selectbox("Navigate to", ["Dashboard", "Resources", "Coping Mechanisms", "Games"])
+        page = st.sidebar.selectbox("Navigate to", ["Dashboard", "Resources", "Coping Mechanisms", "Games", "Chatbot"])
 
         if page == "Dashboard":
             self.show_dashboard()
@@ -163,6 +202,8 @@ class MentalHealthAppUI:
             self.show_coping_mechanisms()
         elif page == "Games":
             self.show_memory_game()
+        elif page == "Chatbot":
+            self.show_dashboard() #Using dashboard to get the API Key.
 
 if __name__ == "__main__":
     support_app = SupportService()

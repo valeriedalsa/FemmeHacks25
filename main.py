@@ -7,7 +7,11 @@ import google.generativeai as genai
 
 # Coping Mechanisms List (for panic attacks)
 COPING_MECHANISMS = [
-    "Breathe in for 4 counts, hold for 4 counts, and breathe out for 4 counts.",
+    "Write down three things you’re grateful for.",
+    "Tense and relax each muscle group, starting from your toes to your head.",
+    " Repeat, 'I choose to focus on what I can control.' You got this.",
+    "Let go of worry by repeating the phrase: 'I release what I cannot change.'",
+    "Visualize the best-case scenario. Reminder: your anxious thoughts may be overwhelming but may not be as real as they feel.",
     "Try to ground yourself by naming 5 things you can see, 4 things you can feel, 3 things you can hear, 2 things you can smell, and 1 thing you can taste.",
     "Focus on your breathing. Inhale for a count of 4, hold for 7, exhale for 8.",
     "Clench your fists tightly for a few seconds, then slowly release them to relieve tension.",
@@ -50,9 +54,14 @@ def flip_card(i):
 class SupportService:
     def __init__(self):
         self.resources = {
-            "resource1": Resource("resource1", "Calm Breathing Exercise", "A guided breathing exercise...", "Coping Strategies", "some_link"),
+            "resource1": Resource("resource1", "Calming Breathing Exercise", "A guided breathing exercise...", "Calming Breathing Exercise", """4-7-8 Technique: 
+Sit or lie in a comfortable position.
+Inhale through your nose for 4 seconds.
+Hold your breath for 7 seconds.
+Exhale slowly through your mouth for 8 seconds.
+Repeat for several rounds. """),
             "resource2": Resource("resource2", "National Suicide Prevention Lifeline", "Call or text 988", "Hotlines"),
-            "resource3": Resource("resource3", "Find a Therapist", "Directory of therapists", "Therapists", "therapist_link")
+            "resource3": Resource("resource3", "Find a Therapist", "Directory of therapists", "Therapists")
         }
 
     def add_resource(self, name, description, category, link=None):

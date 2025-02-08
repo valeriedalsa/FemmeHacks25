@@ -4,6 +4,7 @@ import uuid
 import os
 import random
 import google.generativeai as genai
+import re
 
 # Coping Mechanisms List (for panic attacks)
 COPING_MECHANISMS = [
@@ -90,56 +91,127 @@ class Resource:
 class MentalHealthAppUI:
     def __init__(self, support_service):
         self.support_service = support_service
+        self.google_api_key = self.load_api_key()  # Load API key in the constructor
+
+        if self.google_api_key:
+            genai.configure(api_key=self.google_api_key)
+            self.model = genai.GenerativeModel('gemini-pro')
+        else:
+            self.model = None  # Or some other default value
+            st.error("Google API Key not found. Please configure it in Streamlit secrets or environment variables.")
+
+        # ---------------------
+        # Core: System Prompt
+        # ---------------------
+        self.SYSTEM_PROMPT = """
+        You are a compassionate and supportive mental health chatbot. Your purpose is to provide understanding, encouragement, and resources to users who are experiencing emotional distress.
+
+        Your responses should be:
+
+        *   Empathetic and validating: Acknowledge the user's feelings and experiences.
+        *   Supportive and encouraging: Offer hope and encouragement.
+        *   Informative: Provide accurate information about mental health topics.
+        *   Resourceful: Suggest helpful resources, such as websites, support groups, or crisis hotlines.
+        *   Non-judgmental: Create a safe and welcoming space for users to share their feelings.
+        *   Respectful:  Use the user's preferred language and tone.
+        *   Action oriented :  Suggest coping strategies, but never prescribe medical advice.
+        *   Never provide any medical advice. Refer users to qualified mental health professionals if they need it.
+        *   If the user expresses suicidal thoughts or plans, immediately direct them to a crisis hotline or emergency services.  (e.g., "If you are in immediate danger, please call 911 or go to your nearest emergency room.").
+
+        You are NOT a substitute for professional mental health care.
+
+        If you are unsure about how to respond, say "I'm not qualified to answer that.  Please consult with a mental health professional."
+        """
+
+    # ---------------------
+    # Core: Content Filtering (Example)
+    # ---------------------
+        def is_response_safe(response_text):
+            """
+            Example content filter (customize to your needs). This is a very basic example and you should refine it.
+
+            Returns True if the response is considered safe, False otherwise.
+            """
+            # Check for specific keywords or phrases that are red flags.
+            unsafe_patterns = [
+                r"self-harm",
+                r"suicide plan",
+                r"harm yourself",
+                r"commit suicide",
+                r"how to kill myself",  # extremely important
+                r"prescribe",  # Avoid giving medical advice
+                r"diagnose",
+            ]
+
+            for pattern in unsafe_patterns:
+                if re.search(pattern, response_text, re.IGNORECASE):  # Case-insensitive search
+                    return False
+
+            # Add more sophisticated checks as needed (e.g., sentiment analysis, toxicity detection).
+
+            return True
+
+        self.is_response_safe = is_response_safe # Needed to reference it outside this method.
+
+
+    def load_api_key(self):
+        """Loads the Google API key from Streamlit secrets or environment variable."""
+        if "GOOGLE_API_KEY" in st.secrets:
+            return st.secrets["GOOGLE_API_KEY"]
+        elif "GOOGLE_API_KEY" in os.environ:
+            return os.environ["GOOGLE_API_KEY"]
+        else:
+            return None
 
     def show_dashboard(self):
         st.title("Mental Health Support App")
         st.write("Welcome! Here are some resources and tools to support your mental well-being.")
+        if not self.google_api_key:
+            st.warning("Please configure your Google API key in Streamlit secrets or environment variables.")
+            st.stop() #Stops the dashboard from loading fully
 
-        # Load Google API key from Streamlit secrets (recommended) or environment variable
-        if "GOOGLE_API_KEY" in st.secrets:
-            google_api_key = st.secrets["GOOGLE_API_KEY"]
-        elif "GOOGLE_API_KEY" in os.environ:
-            google_api_key = os.environ["GOOGLE_API_KEY"]
-        else:
-            google_api_key = st.text_input("Google API Key", type="password")  # Ask for key
+    def show_chatbot(self):
+        if not self.model:
+            st.warning("Chatbot is unavailable because the Google API Key is not configured. Please check your configuration.")
+            return  # Or handle this case appropriately
 
-            if not google_api_key:
-                st.info(
-                    "Please enter your Google API key.  You can find it at https://makersuite.google.com/app/apikey."
-                )
-                st.stop()  # Stop execution if no key is provided
-
-        # Configure the Google Generative AI API
-        genai.configure(api_key=google_api_key)
-
-        # Select the Gemini model
-        model = genai.GenerativeModel('gemini-pro')
-
-        # Show title and description for Chatbot
-        st.title("💬 Chatbot")
+        st.title("💬 Mental Health Support Chatbot")
         st.write(
-            "This is a simple chatbot that uses Google's Gemini Pro model to generate responses. "
-            "To use this app, you need to provide a Google API key, which you can get [here](https://makersuite.google.com/app/apikey)."
+            "This chatbot provides supportive and informative responses for mental health concerns.  "
+            "Please remember that it is not a substitute for professional medical advice."
         )
 
-        # Initialize the chat session if it doesn't exist
-        if "chat_session" not in st.session_state:
-            st.session_state.chat_session = model.start_chat(history=[])
+        # Initialize chat history in session state (using only dictionaries)
+        if "chat_history" not in st.session_state:  # Use a *separate* key
+            st.session_state.chat_history = []  # Initialize as an empty list of dictionaries
 
-        # Display the existing chat messages
-        for message in st.session_state.chat_session.history:
-            with st.chat_message(message.role):
-                st.markdown(message.parts[0].text)
+        # Display the chat history
+        for message in st.session_state.chat_history:
+            with st.chat_message(message["role"]):  # Use the dictionary 'role'
+                st.markdown(message["parts"]) # Use the dictionary 'parts'
 
         # Get the user's prompt
-        if prompt := st.chat_input("What is up?"):
+        if prompt := st.chat_input("How can I help you today?"):
             # Add user message to the chat
             with st.chat_message("user"):
                 st.markdown(prompt)
 
             # Get response from the model
             try:
-                response = st.session_state.chat_session.send_message(prompt)
+                # Construct the full prompt, including system instructions
+                full_prompt = f"{self.SYSTEM_PROMPT}\nUser: {prompt}" # Use self.SYSTEM_PROMPT
+
+                response = self.model.generate_content(full_prompt) #Use generate_content instead
+
+                #Add prompt to the chat history
+                st.session_state.chat_history.append({"role": "user", "parts": prompt})
+
+                # Apply content filtering
+                if not self.is_response_safe(response.text): # Use self.is_response_safe
+                    response.text = "I'm sorry, but I'm unable to respond to that. Please rephrase your question or seek help from a qualified mental health professional."
+
+                 #add the AI response to the chat history
+                st.session_state.chat_history.append({"role": "assistant", "parts": response.text})
 
                 # Display the assistant's message
                 with st.chat_message("assistant"):
@@ -212,7 +284,10 @@ class MentalHealthAppUI:
         elif page == "Games":
             self.show_memory_game()
         elif page == "Chatbot":
-            self.show_dashboard() #Using dashboard to get the API Key.
+            if not self.model:
+                st.warning("Chatbot is unavailable because the Google API Key is not configured. Please check your configuration.")
+            else:
+                self.show_chatbot()
 
 if __name__ == "__main__":
     support_app = SupportService()

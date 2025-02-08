@@ -1,16 +1,22 @@
 import streamlit as st
-import datetime
 import uuid
 import os
 import random
 import google.generativeai as genai
 import re
 
+# Customize page tab
+st.set_page_config(
+        page_title="PanicPal",
+        page_icon="🌊",
+        layout="wide",
+    )
+
 # Coping Mechanisms List (for panic attacks)
 COPING_MECHANISMS = [
     "Write down three things you’re grateful for.",
     "Tense and relax each muscle group, starting from your toes to your head.",
-    " Repeat, 'I choose to focus on what I can control.' You got this.",
+    "Repeat, 'I choose to focus on what I can control.' You got this.",
     "Let go of worry by repeating the phrase: 'I release what I cannot change.'",
     "Visualize the best-case scenario. Reminder: your anxious thoughts may be overwhelming but may not be as real as they feel.",
     "Try to ground yourself by naming 5 things you can see, 4 things you can feel, 3 things you can hear, 2 things you can smell, and 1 thing you can taste.",

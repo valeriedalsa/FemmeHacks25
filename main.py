@@ -25,19 +25,26 @@ def get_random_coping_mechanism():
     return random.choice(COPING_MECHANISMS)
 
 # Memory Game Functions
-def init_game():
-    emojis = ['🍀', '🌸', '🌙', '☀️', '🌊', '🍂'] * 2  # Matching pairs
-    random.shuffle(emojis)
-    return emojis, [False] * len(emojis)  # Cards and flipped states
+def init_game(difficulty):
+    """Initializes the memory game based on difficulty."""
+    if difficulty == "easy":
+        num_pairs = 3
+        num_cols = 3
+    elif difficulty == "medium":
+        num_pairs = 6
+        num_cols = 4
+    else:  # difficult
+        num_pairs = 10
+        num_cols = 5
+
+    emojis = ['🐶', '🐱', '🐰', '🐻', '🐼', '🦊', '🦁', '🐯', '🐸', '🐷', '🐨', '🐒', '🐳', '🐞', '🐝', '🦋', '🕷️', '🦂', '🦖', '🦕']
+    selected_emojis = random.sample(emojis, num_pairs)
+    cards = selected_emojis * 2
+    random.shuffle(cards)
+    return cards, [False] * len(cards), num_cols
+
 
 def flip_card(i):
-    if 'flipped' not in st.session_state:
-        st.session_state['flipped'] = [False] * len(st.session_state.get('cards', [])) # Ensure flipped is initialized
-    if 'selected' not in st.session_state:
-        st.session_state['selected'] = []
-    if 'matched' not in st.session_state:
-        st.session_state['matched'] = []
-
     if not st.session_state.flipped[i] and i not in st.session_state.matched:
         st.session_state.flipped[i] = True
         st.session_state.selected.append(i)
@@ -222,15 +229,28 @@ class MentalHealthAppUI:
 
 
     def show_resources(self):
-        st.header("Mental Health Resources")
-        categories = set(resource.category for resource in self.support_service.resources.values())
-        selected_category = st.selectbox("Select a category:", categories)
-        resources = self.support_service.get_resources_by_category(selected_category)
-        for resource in resources:
-            st.subheader(resource.name)
-            st.write(resource.description)
-            if resource.link:
-                st.markdown(f"[Learn more]({resource.link})")
+        st.header("Mental Health Resources in Philadelphia")
+
+        st.subheader("Community Resources")
+        st.markdown("- [FIGHT Community Health Centers](https://fight.org/programs-services/community-health-centers/)")
+        st.markdown("- [Penn Medicine Community Clinics](https://www.med.upenn.edu/fmch/community-clinics)")
+        st.markdown("- [Community Legal Services - Health Centers in Philadelphia](https://clsphila.org/wp-content/uploads/2019/04/RESOURCE-Health-Centers_Philadelphia.pdf)")
+        st.markdown("- [Philadelphia Department of Public Health](https://www.phila.gov/departments/department-of-public-health/health-centers/city-health-centers/)")
+
+        st.subheader("Online Affordable Therapy Options")
+        st.markdown("- [Open Path Collective](https://openpathcollective.org) -  Sessions range from $30-$70")
+        st.markdown("- [A Better Life Therapy](https://abetterlifetherapy.com/lowfeetherapy) - Sessions range from $20-$90")
+        st.markdown("- [Thriveworks Philadelphia](https://thriveworks.com/philadelphia-counseling/philadelphia-pa-online-counseling-therapy/)")
+        st.markdown("- [Move Forward Counseling LLC](https://moveforwardpa.com/office/online-therapy-in-pennsylvania/)")
+        st.markdown("- [The Better You Institute](https://thebetteryouinstitute.com/online-therapy/)")
+
+        st.subheader("Other Mental Health Resources")
+        st.markdown("- [Healthy Minds Philly](https://healthymindsphilly.org) - Offers free mental health screenings and resources")
+        st.markdown("- [NAMI Philadelphia](https://namiphilly.org/resources/local-resources/) - Provides support groups and local resources")
+        st.markdown("- Mental Health Crisis Hotline: 215-685-6440 (Available 24/7)")
+        st.markdown("- Suicide and Crisis Lifeline: 988 (Available 24/7)")
+        st.markdown("- NET Access Point for Opioid Treatment: 844-533-8200 or 215-408-4987")
+        st.markdown("- Intellectual Disability Services: 215-685-5900")
 
     def show_coping_mechanisms(self):
         st.header("Coping Mechanisms")
@@ -242,31 +262,45 @@ class MentalHealthAppUI:
         st.title("🧠 Memory Game for Anxiety Relief")
         st.write("Find all the matching pairs!")
 
-        if 'cards' not in st.session_state:
-            st.session_state.cards, st.session_state.flipped = init_game()
+        difficulty = st.radio("Select difficulty:", ["easy", "medium", "difficult"], horizontal=True)
+
+        # Initialize the game based on the selected difficulty.
+        if 'difficulty' not in st.session_state or st.session_state.difficulty != difficulty:
+            st.session_state.difficulty = difficulty
+            st.session_state.cards, st.session_state.flipped, st.session_state.num_cols = init_game(st.session_state.difficulty)
             st.session_state.selected = []
             st.session_state.matched = []
-        if 'flipped' not in st.session_state:
-            st.session_state['flipped'] = [False] * len(st.session_state.get('cards', [])) # Ensure flipped is initialized
-        if 'selected' not in st.session_state:
-            st.session_state['selected'] = []
-        if 'matched' not in st.session_state:
-            st.session_state['matched'] = []
 
+        num_cols = st.session_state.num_cols
 
-        cols = st.columns(4)  # Create a 4-column grid
+        cols = st.columns(num_cols)  # Create columns
+
+        # Custom CSS to make buttons larger
+        st.markdown("""
+        <style>
+        .stButton>button {
+            width: 100px;
+            height: 100px;
+            font-size: 40px;
+        }
+        </style>
+        """, unsafe_allow_html=True)
 
         for i, emoji in enumerate(st.session_state.cards):
-            with cols[i % 4]:  # Distribute cards in grid
+            col_index = i % num_cols
+            with cols[col_index]:
                 if st.session_state.flipped[i] or i in st.session_state.matched:
                     st.button(emoji, key=f'card_{i}', disabled=True)
                 else:
-                    st.button("❓", key=f'card_{i}', on_click=flip_card, args=(i,))
+                    st.button("⭐", key=f'card_{i}', on_click=flip_card, args=(i,))
 
         if len(st.session_state.matched) == len(st.session_state.cards):
             st.success("🎉 You found all the pairs! Great job!")
+            #st_confetti(duration=3, key="confetti")  # Trigger confetti #Comment this out if the confetti doesn't work
+            st.balloons()
+
             if st.button("Restart Game"):
-                st.session_state.cards, st.session_state.flipped = init_game()
+                st.session_state.cards, st.session_state.flipped, st.session_state.num_cols = init_game(st.session_state.difficulty)
                 st.session_state.selected = []
                 st.session_state.matched = []
                 st.rerun()

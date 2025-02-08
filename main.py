@@ -1,12 +1,33 @@
 import streamlit as st
 import datetime
 import uuid
+import hashlib
+import os
+
+# Function to hash passwords securely
+def hash_password(password, salt=None):
+    if salt is None:
+        salt = os.urandom(16)  # Generate a random salt
+    salted_password = salt + password.encode('utf-8')
+    hashed_password = hashlib.sha256(salted_password).hexdigest()
+    return salt, hashed_password
+
+# Function to verify passwords
+def verify_password(stored_salt, stored_hash, password):
+    salt = stored_salt
+    salted_password = salt + password.encode('utf-8')
+    hashed_password = hashlib.sha256(salted_password).hexdigest()
+    return hashed_password == stored_hash
+
+
 
 class User:
-    def __init__(self, user_id, name, email, preferences=None):
+    def __init__(self, user_id, name, email, password_salt, password_hash, preferences=None):
         self.user_id = user_id
         self.name = name
         self.email = email
+        self.password_salt = password_salt # Store the salt
+        self.password_hash = password_hash # Store the hashed password
         self.preferences = preferences or {}
         self.support_history = []
 
@@ -30,11 +51,19 @@ class Resource:
 class SupportService:
     def __init__(self):
         self.users = {}
-        self.resources = {}
 
-    def register_user(self, name, email):
+        # Example Resources for testing
+        self.resources = {
+            "resource1": Resource("resource1", "Calm Breathing Exercise", "A guided breathing exercise...", "Coping Strategies", "some_link"),
+            "resource2": Resource("resource2", "National Suicide Prevention Lifeline", "Call or text 988", "Hotlines"),
+            "resource3": Resource("resource3", "Find a Therapist", "Directory of therapists", "Therapists", "therapist_link")
+        }
+
+
+    def register_user(self, name, email, password):
         user_id = self._generate_unique_id()
-        new_user = User(user_id, name, email)
+        salt, hashed_password = hash_password(password)  # Hash the password
+        new_user = User(user_id, name, email, salt, hashed_password)
         self.users[user_id] = new_user
         return new_user
 
@@ -61,6 +90,15 @@ class SupportService:
     def _generate_unique_id(self):
         return str(uuid.uuid4())
 
+    def authenticate_user(self, email, password):
+        for user_id, user in self.users.items():
+            if user.email == email:
+                if verify_password(user.password_salt, user.password_hash, password):
+                    return user
+                else:
+                    return None # Incorrect Password
+        return None  # User not found
+
 
 class MentalHealthAppUI:
     def __init__(self, support_service):
@@ -85,24 +123,32 @@ class MentalHealthAppUI:
 
     def handle_login(self):
         email = st.text_input("Email")
+        password = st.text_input("Password", type="password")
         if st.button("Login"):
-            for user in self.support_service.users.values():
-                if user.email == email:
-                    self.user = user
-                    st.success(f"Logged in as {user.name}!")
-                    break
+            user = self.support_service.authenticate_user(email, password)
+            if user:
+                self.user = user
+                st.success(f"Logged in as {user.name}!")
+                st.experimental_rerun() # Refresh to show the main menu
             else:
-                st.error("Invalid email.")
+                st.error("Invalid email or password.")
 
     def handle_registration(self):
         name = st.text_input("Name")
         email = st.text_input("Email")
+        password = st.text_input("Password", type="password")  # Password field
+        password_confirm = st.text_input("Confirm Password", type="password")
+
+
         if st.button("Register"):
-            if name and email:
-                self.user = self.support_service.register_user(name, email)
+            if name and email and password and password == password_confirm:
+                self.user = self.support_service.register_user(name, email, password)
                 st.success(f"User {self.user.name} registered!")
+                st.experimental_rerun() # Refresh to show the main menu
+            elif password != password_confirm:
+                st.error("Passwords do not match.")
             else:
-                st.error("Please enter name and email.")
+                st.error("Please enter all the required information.")
 
     def show_main_menu(self):
         st.sidebar.title("Menu")
@@ -161,10 +207,10 @@ class MentalHealthAppUI:
 if __name__ == "__main__":
     support_app = SupportService()
 
-    # Add some initial resources (for testing)
-    support_app.add_resource("Calm Breathing Exercise", "A guided breathing exercise...", "Coping Strategies", "some_link")
-    support_app.add_resource("National Suicide Prevention Lifeline", "Call or text 988", "Hotlines")
-    support_app.add_resource("Find a Therapist", "Directory of therapists", "Therapists", "therapist_link")
+    # Add some initial users (for testing)
+    support_app.register_user("Test User", "test@example.com", "password")
+    support_app.register_user("Another User", "another@example.com", "another_password")
+
 
     ui = MentalHealthAppUI(support_app)
     ui.run()

@@ -244,8 +244,8 @@ class MentalHealthAppUI:
         st.markdown("- [Philadelphia Department of Public Health](https://www.phila.gov/departments/department-of-public-health/health-centers/city-health-centers/)")
 
         st.subheader("Online Affordable Therapy Options")
-        st.markdown("- [Open Path Collective](https://openpathcollective.org) -  Sessions range from $30-$70")
-        st.markdown("- [A Better Life Therapy](https://abetterlifetherapy.com/lowfeetherapy) - Sessions range from $20-$90")
+        st.markdown("- [Open Path Collective](https://openpathcollective.org) -  Sessions range from \$30-\$70")
+        st.markdown("- [A Better Life Therapy](https://abetterlifetherapy.com/lowfeetherapy) - Sessions range from \$20-\$90")
         st.markdown("- [Thriveworks Philadelphia](https://thriveworks.com/philadelphia-counseling/philadelphia-pa-online-counseling-therapy/)")
         st.markdown("- [Move Forward Counseling LLC](https://moveforwardpa.com/office/online-therapy-in-pennsylvania/)")
         st.markdown("- [The Better You Institute](https://thebetteryouinstitute.com/online-therapy/)")
@@ -302,7 +302,6 @@ class MentalHealthAppUI:
 
         if len(st.session_state.matched) == len(st.session_state.cards):
             st.success("🎉 You found all the pairs! Great job!")
-            #st_confetti(duration=3, key="confetti")  # Trigger confetti #Comment this out if the confetti doesn't work
             st.balloons()
 
             if st.button("Restart Game"):

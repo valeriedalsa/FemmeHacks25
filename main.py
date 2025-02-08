@@ -171,8 +171,8 @@ class MentalHealthAppUI:
             return None
 
     def show_dashboard(self):
-        st.title("Mental Health Support App")
-        st.write("Welcome! Here are some resources and tools to support your mental well-being.")
+        st.title("PanicPal")
+        st.write("Your personal anxiety helper.")
         if not self.google_api_key:
             st.warning("Please configure your Google API key in Streamlit secrets or environment variables.")
             st.stop() #Stops the dashboard from loading fully
@@ -253,7 +253,7 @@ class MentalHealthAppUI:
         st.markdown("- Intellectual Disability Services: 215-685-5900")
 
     def show_coping_mechanisms(self):
-        st.header("Coping Mechanisms")
+        st.header("Anxiety Coping Mechanisms")
         if st.button("Get a Coping Mechanism"):
             mechanism = get_random_coping_mechanism()
             st.write(mechanism)
@@ -313,7 +313,7 @@ class MentalHealthAppUI:
             self.show_dashboard()
         elif page == "Resources":
             self.show_resources()
-        elif page == "Coping Mechanisms":
+        elif page == "Anxiety Coping Mechanisms":
             self.show_coping_mechanisms()
         elif page == "Games":
             self.show_memory_game()

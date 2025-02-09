@@ -12,7 +12,7 @@ st.set_page_config(
     layout="wide",
 )
 
-with open('/workspaces/FemmeHacks25/customize.css') as f:
+with open('customize.css') as f:
     css = f.read()
 
 st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)

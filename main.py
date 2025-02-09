@@ -191,9 +191,9 @@ class MentalHealthAppUI:
             st.warning("Chatbot is unavailable because the Google API Key is not configured. Please check your configuration.")
             return  # Or handle this case appropriately
 
-        st.title("💬 Mental Health Support Chatbot")
+        st.title("💬 PanicPal Support Bot")
         st.write(
-            "This chatbot provides supportive and informative responses for mental health concerns.  "
+            "This support bot provides supportive and informative responses for mental health concerns.  "
             "Please remember that it is not a substitute for professional medical advice."
         )
 
@@ -238,6 +238,8 @@ class MentalHealthAppUI:
 
     def show_resources(self):
         st.header("Mental Health Resources in Philadelphia")
+
+        st.write("Your mental health matters. If you're looking for support in Philadelphia, you're not alone. Below, you'll find a range of resources, from community clinics offering comprehensive care to affordable therapy options and immediate crisis support. Take the first step towards feeling better.")
 
         st.subheader("Community Resources")
         st.markdown("- [FIGHT Community Health Centers](https://fight.org/programs-services/community-health-centers/)")
@@ -389,9 +391,9 @@ class MentalHealthAppUI:
 
     def run(self):
         # Add a selectbox in the sidebar for navigation
-        page = st.sidebar.selectbox("Navigate to", ["Dashboard", "Resources", "Anxiety Coping Mechanisms", "Games", "Chatbot"])
+        page = st.sidebar.selectbox("Navigate to", ["Home", "Resources", "Anxiety Coping Mechanisms", "Games", "Support Bot"])
 
-        if page == "Dashboard":
+        if page == "Home":
             self.show_dashboard()
         elif page == "Resources":
             self.show_resources()
@@ -399,7 +401,7 @@ class MentalHealthAppUI:
             self.show_coping_mechanisms()
         elif page == "Games":
             self.show_games()
-        elif page == "Chatbot":
+        elif page == "Support Bot":
             if not self.model:
                 st.warning("Chatbot is unavailable because the Google API Key is not configured. Please check your configuration.")
             else:

@@ -7,10 +7,15 @@ import re
 
 # Customize page tab
 st.set_page_config(
-    page_title="PanicPal!",
+    page_title="PanicPal",
     page_icon="🌊",
     layout="wide",
 )
+
+with open('/workspaces/FemmeHacks25/customize.css') as f:
+    css = f.read()
+
+st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)
 
 # Coping Mechanisms List (for panic attacks)
 COPING_MECHANISMS = [

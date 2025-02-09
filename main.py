@@ -184,7 +184,7 @@ class MentalHealthAppUI:
         if not self.google_api_key:
             st.warning("Please configure your Google API key in Streamlit secrets or environment variables.")
             st.stop() #Stops the dashboard from loading fully
-        st.image("wallpapertip_wallpaper-piano_1729920.jpg")
+        st.image("calm.jpg")
 
     def show_chatbot(self):
         if not self.model:
